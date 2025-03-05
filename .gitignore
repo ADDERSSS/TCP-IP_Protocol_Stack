@@ -1,55 +1,58 @@
+# 编译输出 
+.bulid/* 
+*.o 
+*.obj 
+*.exe 
+*.dll 
+*.so 
+*.dylib 
+*.a 
+*.lib  
 
-# 编译输出
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.dylib
-*.a
-*.lib
+# 忽略build目录及其所有内容
+build/
 
-# Visual Studio相关
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.vcxproj.filters
-ipch/
-*.aps
-*.ncb
-*.opendb
-*.opensdf
-*.sdf
-*.cachefile
-*.VC.db
-*.VC.VC.opendb
-Debug/
-Release/
-x64/
-x86/
-[Bb]in/
-[Oo]bj/
+# Visual Studio相关 
+.vs/ 
+*.suo 
+*.user 
+*.userosscache  
+*.sln.docstates 
+*.vcxproj.filters 
+ipch/ 
+*.aps 
+*.ncb 
+*.opendb 
+*.opensdf 
+*.sdf 
+*.cachefile 
+*.VC.db 
+*.VC.VC.opendb 
+Debug/ 
+Release/ 
+x64/ 
+x86/ 
+[Bb]in/ 
+[Oo]bj/  
 
-# Visual Studio Code相关
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# Visual Studio Code相关 
+.vscode/* 
+!.vscode/settings.json 
+!.vscode/tasks.json 
+!.vscode/launch.json 
+!.vscode/extensions.json  
 
-# 预编译头文件
-*.gch
-*.pch
+# 预编译头文件 
+*.gch 
+*.pch  
 
-# 日志文件
-*.log
+# 日志文件 
+*.log  
 
-# 临时文件
-*.tmp
-*.temp
+# 临时文件 
+*.tmp 
+*.temp  
 
-# 系统相关
-.DS_Store
+# 系统相关 
+.DS_Store 
 Thumbs.db

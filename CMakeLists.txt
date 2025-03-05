@@ -1,6 +1,11 @@
 # cmake最低版本要求
 cmake_minimum_required(VERSION 3.7)
 
+if(WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
+endif()
+
 # 设置工程的名字，生成的可执行文件也将使用该名称，如net.exe
 project(net)
 set(CMAKE_C_STANDARD 99)
