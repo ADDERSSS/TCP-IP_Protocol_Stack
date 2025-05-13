@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "sys_plat.h"
 #include "echo/tcp_echo_client.h"
+#include "echo/tcp_echo_server.h"
 
 static sys_mutex_t mutex;
 static sys_sem_t sem;
@@ -74,7 +75,8 @@ int main (void) {
 	// sys_thread_create(thread1_entry, "AAAA");
 	// sys_thread_create(thread2_entry, "BBBB");
 
-	tcp_echo_client_start(friend0_ip, 5000);
+	//tcp_echo_client_start(friend0_ip, 5000);
+	tcp_echo_server_start(5000);
 
 	//static const uint8_t netdev0_hwaddr[] = { 0x00, 0x50, 0x56, 0xc0, 0x00, 0x11 };
 	pcap_t* pcap = pcap_device_open(netdev0_phy_ip, netdev0_hwaddr);
