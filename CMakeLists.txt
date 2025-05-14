@@ -1,4 +1,4 @@
-# cmakeæœ€ä½ç‰ˆæœ¬è¦æ±‚
+# cmake×îµÍ°æ±¾ÒªÇó
 cmake_minimum_required(VERSION 3.7)
 
 if(WIN32)
@@ -6,35 +6,35 @@ if(WIN32)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
 endif()
 
-# è®¾ç½®å·¥ç¨‹çš„åå­—ï¼Œç”Ÿæˆçš„å¯æ‰§è¡Œæ–‡ä»¶ä¹Ÿå°†ä½¿ç”¨è¯¥åç§°ï¼Œå¦‚net.exe
+# ÉèÖÃ¹¤³ÌµÄÃû×Ö£¬Éú³ÉµÄ¿ÉÖ´ĞĞÎÄ¼şÒ²½«Ê¹ÓÃ¸ÃÃû³Æ£¬Èçnet.exe
 project(net)
 set(CMAKE_C_STANDARD 99)
 
 LINK_DIRECTORIES(
-    ${PROJECT_SOURCE_DIR}/npcap/Lib/x64          # win64ä½¿ç”¨
-    #${PROJECT_SOURCE_DIR}/lib/npcap/Lib/             # win32ä½¿ç”¨
+    ${PROJECT_SOURCE_DIR}/npcap/Lib/x64          # win64Ê¹ÓÃ
+    #${PROJECT_SOURCE_DIR}/lib/npcap/Lib/             # win32Ê¹ÓÃ
 )
 
-# ç»™visual studioç¼–è¯‘å™¨ä½¿ç”¨çš„å®ï¼ŒEnable GCC debug
+# ¸øvisual studio±àÒëÆ÷Ê¹ÓÃµÄºê£¬Enable GCC debug
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
-# å¤´æ–‡ä»¶æœç´¢è·¯å¾„ï¼Œä½¿å¾—cæ–‡ä»¶ä¸­å¯ä»¥ç›´æ¥ä½¿ç”¨#include "xxx.h"ï¼Œè€Œä¸å¿…åŠ å‰ç¼€
+# Í·ÎÄ¼şËÑË÷Â·¾¶£¬Ê¹µÃcÎÄ¼şÖĞ¿ÉÒÔÖ±½ÓÊ¹ÓÃ#include "xxx.h"£¬¶ø²»±Ø¼ÓÇ°×º
 include_directories(
         ${PROJECT_SOURCE_DIR}
-        ${PROJECT_SOURCE_DIR}/npcap/Include          # pcapè·¯å¾„
+        ${PROJECT_SOURCE_DIR}/npcap/Include          # pcapÂ·¾¶
         ${PROJECT_SOURCE_DIR}/src/net/net 
         ${PROJECT_SOURCE_DIR}/src/plat
         ${PROJECT_SOURCE_DIR}/src/app
 )
 
-# æœç´¢srcä¸‹é¢çš„æ‰€æœ‰æºæ–‡ä»¶ï¼Œç”Ÿæˆæ–‡ä»¶åˆ—è¡¨
+# ËÑË÷srcÏÂÃæµÄËùÓĞÔ´ÎÄ¼ş£¬Éú³ÉÎÄ¼şÁĞ±í
 file(GLOB_RECURSE SOURCE_LIST "src/*.c" "src/*.h")
 
-# å°†æºæ–‡ä»¶åˆ—è¡¨åŠ å…¥åˆ°å·¥ç¨‹ä¸­
+# ½«Ô´ÎÄ¼şÁĞ±í¼ÓÈëµ½¹¤³ÌÖĞ
 add_executable(${PROJECT_NAME} ${SOURCE_LIST})
 
-# ä¸ä¸€äº›åº“è¿›è¡Œç¼–è¯‘é“¾æ¥ï¼Œç”Ÿæˆæœ€ç»ˆçš„ç¨‹åº
-# é’ˆå¯¹ç½‘ç»œçš„å¹³å°é…ç½®
+# ÓëÒ»Ğ©¿â½øĞĞ±àÒëÁ´½Ó£¬Éú³É×îÖÕµÄ³ÌĞò
+# Õë¶ÔÍøÂçµÄÆ½Ì¨ÅäÖÃ
 add_definitions(-DNET_DRIVER_PCAP)    # use pcap
 
 message(STATUS "current platform: ${CMAKE_HOST_SYSTEM_NAME}")
@@ -42,7 +42,7 @@ if(CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
     add_definitions(-DSYS_PLAT_WINDOWS)
     target_link_libraries(${PROJECT_NAME} wpcap packet Ws2_32)
 else()
-    # Linuxå’ŒMacä¸Šçš„ç‰¹å®šé…ç½®
+    # LinuxºÍMacÉÏµÄÌØ¶¨ÅäÖÃ
     add_definitions(-DSYS_PLAT_LINUX)
     target_link_libraries(${PROJECT_NAME} pthread pcap)
 endif()
