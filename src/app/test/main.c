@@ -1,10 +1,11 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include "sys_plat.h"
 #include "echo/tcp_echo_client.h"
 #include "echo/tcp_echo_server.h"
 #include "net.h"
 #include "netif_pcap.h"
 #include "dbg.h"
+#include "nlist.h"
 
 static sys_mutex_t mutex;
 static sys_sem_t sem;
@@ -72,6 +73,73 @@ net_err_t netdev_init (void) {
 
 	return NET_ERR_OK;
 }
+typedef struct _tnode_t {
+	int id;
+	nlist_node_t node;
+}tnode_t;
+
+void nlist_test (void) {
+	#define NODE_CNT 4
+	tnode_t node[NODE_CNT];
+	nlist_t list;
+
+	nlist_init(&list);
+
+	for (int i = 0; i < NODE_CNT; i++) {
+		node[i].id = i;
+		nlist_insert_first(&list, &node[i].node);
+	}
+
+	plat_printf("insert done list count = %d\n", nlist_count(&list));
+
+	nlist_node_t * p;
+	nlist_for_each(p, &list) {
+		tnode_t * node = nlist_entry(p, tnode_t, node);
+		plat_printf("id = %d\n", node->id);
+	}
+
+	plat_printf("remove first node\n");
+	for (int i = 0; i < NODE_CNT; i++) {
+		tnode_t * node = nlist_to_parent(nlist_remove_first(&list), tnode_t, node);
+		plat_printf("id = %d\n", node->id);
+	}
+
+	plat_printf("insert last node\n");
+	for (int i = 0; i < NODE_CNT; i++) {
+		node[i].id = i;
+		nlist_insert_last(&list, &node[i].node);
+	}
+	plat_printf("insert done list count = %d\n", nlist_count(&list));
+
+	nlist_for_each(p, &list) {
+		tnode_t * node = nlist_entry(p, tnode_t, node);
+		plat_printf("id = %d\n", node->id);
+	}
+
+	plat_printf("remove last node\n");
+	for (int i = 0; i < NODE_CNT; i++) {
+		tnode_t * node = nlist_to_parent(nlist_remove_last(&list), tnode_t, node);
+		plat_printf("id = %d\n", node->id);
+	}
+
+	plat_printf("list count = %d\n", nlist_count(&list));
+
+	plat_printf("insert after\n");
+	for (int i = 0; i < NODE_CNT; i++) {
+		node[i].id = i;
+		nlist_insert_after(&list, nlist_first(&list), &node[i].node);
+	}
+
+	plat_printf("insert done list count = %d\n", nlist_count(&list));
+	nlist_for_each(p, &list) {
+		tnode_t * node = nlist_entry(p, tnode_t, node);
+		plat_printf("id = %d\n", node->id);
+	}
+}
+
+void basic_test (void) {
+	nlist_test();
+}
 
 #define DBG_TEST DBG_LEVEL_INFO
 int main (void) {
@@ -80,11 +148,12 @@ int main (void) {
 	dbg_error(DBG_TEST, "error");
 	
 	dbg_assert(1 == 1, "failed");
-	dbg_assert(1 == 0, "failed");
 
 	net_init();
 
-	net_start();
+	basic_test();
+
+	net_start();	
 
 	netdev_init();
 
