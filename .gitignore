@@ -9,7 +9,7 @@
 *.a 
 *.lib  
 
-# 忽略build�?录及其所有内�?
+# 忽略build�?录及其所有内�?
 build/
 
 work/
@@ -58,3 +58,4 @@ x86/
 # 系统相关 
 .DS_Store 
 Thumbs.db
+.promptx/resource/project.registry.json

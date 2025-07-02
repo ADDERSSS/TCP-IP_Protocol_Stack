@@ -6,6 +6,7 @@
 #include "netif_pcap.h"
 #include "dbg.h"
 #include "nlist.h"
+#include "mblcok.h"
 
 static sys_mutex_t mutex;
 static sys_sem_t sem;
@@ -137,8 +138,28 @@ void nlist_test (void) {
 	}
 }
 
+void mblock_test (void) { 
+	mblock_t blist;
+	static uint8_t buffer[100][10];
+	mblock_init(&blist, buffer, 100, 10, NLOCKER_THREAD);
+
+	void * temp[10];
+	for (int i = 0; i < 10; i++) {
+		temp[i] = mblock_alloc(&blist, 0);
+		plat_printf("block: %p, free_cnt = %d\n", temp[i], mblock_free_cnt(&blist));
+	}
+
+	for (int i = 0; i < 10; i++) {
+		mblock_free(&blist, temp[i]);
+		plat_printf("block: %p, free_cnt = %d\n", temp[i], mblock_free_cnt(&blist));
+	}
+
+	mblock_destroy(&blist);
+}
+
 void basic_test (void) {
 	nlist_test();
+	mblock_test();
 }
 
 #define DBG_TEST DBG_LEVEL_INFO
