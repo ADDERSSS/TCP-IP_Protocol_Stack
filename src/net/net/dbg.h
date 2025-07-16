@@ -25,4 +25,6 @@ void dbg_print (int m_level, int s_level, const char * file, const char * func, 
     }\
 }
 
+#define DBG_DISP_ENABLE(module) (module >= DBG_LEVEL_INFO)
+
 #endif

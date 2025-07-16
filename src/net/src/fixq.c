@@ -101,7 +101,7 @@ void fixq_destroy (fixq_t * q) {
     sys_sem_free(q->send_sem);
     return;
 }
-
+ 
 int fixq_cnt (fixq_t * q) {
     nlocker_lock (&q->locker);
     int count = q->cnt;
