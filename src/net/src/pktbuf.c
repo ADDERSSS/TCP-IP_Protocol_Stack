@@ -77,6 +77,18 @@ static pktblk_t * pktblock_alloc(void) {
     return block;
 }
 
+static void pktblock_free(pktblk_t * block) { 
+    mblock_free(&block_list, block);
+}
+
+static void pktblk_free_list (pktblk_t * first) {
+    while (first) {
+        pktblk_t * next = pktblk_blk_next(first);
+        pktblock_free(first);
+        first = next;
+    }
+}
+
 static pktblk_t * pktblock_alloc_list(int size, int add_front) { 
     pktblk_t * first_block = (pktblk_t *)0;
     pktblk_t * pre_block = (pktblk_t *)0;
@@ -86,7 +98,7 @@ static pktblk_t * pktblock_alloc_list(int size, int add_front) {
         if (!new_block) {
             dbg_error(DBG_BUF, "pktblock_alloc_list(%d): no memory", size);
 
-            // block_free();
+            pktblk_free_list(first_block);
             return (pktblk_t *)0;
         }
 
@@ -143,9 +155,11 @@ static void pktbuf_insert_blk_list (pktbuf_t * buf, pktblk_t * first_blk, int ad
                 nlist_insert_first(&buf->blk_list, &first_blk->node);
             }
 
+            buf->total_size += first_blk->size;
+
             pre = first_blk;
             first_blk = next_blk;
-            buf->total_size += first_blk->size;
+
         }
     }
 }
@@ -177,5 +191,77 @@ pktbuf_t * pktbuf_alloc(int size) {
 }
 
 void pktbuf_free(pktbuf_t * pktbuf) {
+    pktblk_free_list(pktbuf_first_blk(pktbuf));
+    mblock_free(&pktbuf_list, pktbuf);
+}
 
+net_err_t pktbuf_add_header(pktbuf_t * buf, int size, int cont) {
+    pktblk_t * block = pktbuf_first_blk(buf);
+
+    int resv_size = (int)(block->data - block->payload);
+    if (size <= resv_size) {
+        block->size += size;
+        block->data -= size;
+        buf->total_size += size;
+
+        display_check_buf(buf);
+        return NET_ERR_OK;
+    }
+
+    if (cont) {
+        if (size > PKTBUF_BLK_SIZE) {
+            dbg_error(DBG_BUF, "set cont, size too big: %d > %d", size, PKTBUF_BLK_SIZE);
+            return NET_ERR_SIZE;
+        }
+
+        block = pktblock_alloc_list(size, 1);
+        if (!block) {
+            dbg_error(DBG_BUF, "set cont, alloc block failed");
+            return NET_ERR_NONE;
+        }
+
+    } else {
+        block->data = block->payload;
+        block->size += resv_size;
+        buf->total_size += resv_size;
+        size -= resv_size;
+
+        block = pktblock_alloc_list(size, 1);
+        if (!block) {
+            dbg_error(DBG_BUF, "set cont, alloc block failed");
+            return NET_ERR_NONE;
+        }
+
+    }
+
+    pktbuf_insert_blk_list(buf, block, 0);
+    display_check_buf(buf);
+    return NET_ERR_OK;
+}
+
+net_err_t pktbuf_remove_header(pktbuf_t * buf, int size) {
+    pktblk_t * block = pktbuf_first_blk(buf);
+    while (size) {
+        pktblk_t * next_block = pktblk_blk_next(block);
+
+        if (size < block->size) {
+            block->data += size;
+            block->size -= size;
+            buf->total_size -= size;
+            break;
+        }
+
+        int curr_size = block->size;
+
+        nlist_remove_first(&buf->blk_list);
+        pktblock_free(block);
+
+        size -= curr_size;
+        buf->total_size -= curr_size;
+
+        block = next_block;
+    }
+
+    display_check_buf(buf);
+    return NET_ERR_OK;
 }
