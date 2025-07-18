@@ -265,3 +265,88 @@ net_err_t pktbuf_remove_header(pktbuf_t * buf, int size) {
     display_check_buf(buf);
     return NET_ERR_OK;
 }
+
+net_err_t pktbuf_resize (pktbuf_t * buf, int to_size) {
+    if (to_size == buf->total_size) {
+        return NET_ERR_OK;
+    }
+
+    if (buf->total_size == 0) {
+        pktblk_t * block = pktblock_alloc_list(to_size, 0);
+        if (!block) {
+            dbg_error(DBG_BUF, "pktbuf_resize: no memory");
+            return NET_ERR_MEM;
+        }
+
+        pktbuf_insert_blk_list(buf, block, 1);
+    } else if (to_size == 0) {
+        pktblk_free_list(pktbuf_first_blk(buf));
+        buf->total_size = 0;
+        nlist_init(&buf->blk_list);
+    } else if (to_size > buf->total_size) {
+        pktblk_t * tail_block = pktbuf_last_blk(buf);
+
+        int inc_size = to_size - buf->total_size;
+        int remain_size = curr_blk_tail_free(tail_block);
+
+        if (remain_size >= inc_size) {
+            tail_block->size += inc_size;
+            buf->total_size += inc_size;
+        } else {
+            pktblk_t * new_blocks = pktblock_alloc_list(inc_size - remain_size, 0);
+            if (!new_blocks) {
+                dbg_error(DBG_BUF, "pktbuf_resize: no memory");
+                return NET_ERR_MEM;
+            }
+            tail_block->size += remain_size;
+            buf ->total_size += remain_size;
+            pktbuf_insert_blk_list(buf, new_blocks, 1);
+        }
+    } else {
+        int total_size = 0;
+
+        pktblk_t * tail_block;
+        for (tail_block = pktbuf_first_blk(buf); tail_block; tail_block = pktblk_blk_next(tail_block)) {
+            total_size += tail_block->size;
+            if (total_size >= to_size) {
+                break;
+            }
+        }
+
+        if (tail_block == (pktblk_t *)0) {
+            return NET_ERR_SIZE;
+        }
+
+        total_size = 0;
+        pktblk_t * curr_blk = pktblk_blk_next(tail_block);
+        while (curr_blk) {
+            pktblk_t * next_blk = pktblk_blk_next(curr_blk);
+
+            total_size += curr_blk->size;
+            nlist_remove(&buf->blk_list, &curr_blk->node);
+            pktblock_free(curr_blk);
+
+            curr_blk = next_blk;
+        }
+
+        tail_block->size -= buf->total_size - total_size - to_size;
+        buf->total_size = to_size;
+
+    }
+
+    display_check_buf(buf);
+    return NET_ERR_OK;
+}
+
+net_err_t pktbuf_join (pktbuf_t * dest, pktbuf_t * src) {
+    pktblk_t * first;
+
+    while ((first = pktbuf_first_blk(src))) {
+        nlist_remove_first(&src->blk_list);
+        pktbuf_insert_blk_list(dest, first, 1);
+    }
+
+    pktbuf_free(src);
+    display_check_buf(dest);
+    return NET_ERR_OK;
+}

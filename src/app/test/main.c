@@ -178,6 +178,23 @@ void pktbuf_test (void) {
 	for (int i = 0; i < 16; i++) {
 		pktbuf_remove_header(buf, 33);
 	}
+
+	pktbuf_free(buf);
+
+	buf = pktbuf_alloc(8);
+	pktbuf_resize(buf, 32);
+	pktbuf_resize(buf, 288);
+	pktbuf_resize(buf, 4922);
+	pktbuf_resize(buf, 1921);
+	pktbuf_resize(buf, 288);
+	pktbuf_resize(buf, 32);
+	pktbuf_resize(buf, 0);
+	pktbuf_free(buf);
+
+	buf = pktbuf_alloc(689);
+	pktbuf_t * sbuf = pktbuf_alloc(892);
+	pktbuf_join(buf, sbuf);
+	pktbuf_free(buf);
 }
 void basic_test (void) {
 	nlist_test();
