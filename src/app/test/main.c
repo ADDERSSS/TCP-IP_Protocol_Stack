@@ -269,6 +269,19 @@ void pktbuf_test (void) {
 		return;
 	}
 
+	pktbuf_seek(dest, 0);
+	pktbuf_fill(dest, 53, pktbuf_total(dest));
+	plat_memset(read_temp, 0, sizeof(read_temp));
+	pktbuf_seek(dest, 0);
+	pktbuf_read(dest, (uint8_t *)read_temp, pktbuf_total(dest));
+	char * ptr = (char *)read_temp;
+	for (int i = 0; i < pktbuf_total(dest); i++) {
+		if (*ptr++ != 53) {
+			plat_printf("pktbuf_fill error\n");
+			return;
+		}
+	}
+
 	pktbuf_free(dest);
 	pktbuf_free(buf);
 

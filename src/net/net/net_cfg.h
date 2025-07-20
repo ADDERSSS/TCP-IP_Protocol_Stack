@@ -4,7 +4,9 @@
 #define DBG_MODULE_MBLOCK   DBG_LEVEL_INFO
 #define DBG_QUEUE           DBG_LEVEL_INFO
 #define DBG_MSG             DBG_LEVEL_INFO
-#define DBG_BUF             DBG_LEVEL_INFO
+#define DBG_BUF             DBG_LEVEL_INFO 
+#define DBG_INIT            DBG_LEVEL_INFO
+#define DBG_PLAT            DBG_LEVEL_INFO
 
 #define EXMSG_MSG_CNT       10
 #define EXMSG_LOCKER        NLOCKER_THREAD

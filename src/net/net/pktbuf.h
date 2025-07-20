@@ -19,6 +19,7 @@ typedef struct _pktbuf_t {
     nlist_t blk_list;
     nlist_node_t node;
 
+    int ref;
     int pos;
     pktblk_t * curr_blk;
     uint8_t * blk_offset;
@@ -36,6 +37,12 @@ static inline pktblk_t * pktblk_blk_next (pktblk_t * blk) {
 static inline pktblk_t * pktbuf_first_blk (pktbuf_t * buf) {
     nlist_node_t * first = nlist_first(&buf->blk_list);
     return nlist_entry(first, pktblk_t, node);
+}
+
+
+static inline uint8_t * pktbuf_data(pktbuf_t * buf) {
+    pktblk_t * first = pktbuf_first_blk(buf);
+    return first ? first->data : (uint8_t *)0;
 }
 
 static inline pktblk_t * pktbuf_last_blk (pktbuf_t * buf) {
@@ -69,5 +76,7 @@ net_err_t pktbuf_seek(pktbuf_t * buf, int offset);
 net_err_t pktbuf_copy(pktbuf_t * dest, pktbuf_t * src, int size);
 
 net_err_t pktbuf_fill(pktbuf_t * buf, uint8_t value, int size);
+
+void pktbuf_inc_ref(pktbuf_t * buf);
 
 #endif
