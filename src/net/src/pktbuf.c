@@ -9,6 +9,19 @@ static mblock_t block_list;
 static pktbuf_t pktbuf_buffer[PKTBUF_BUF_CNT];
 static mblock_t pktbuf_list;
 
+static inline int total_blk_remain (pktbuf_t * buf) {
+    return buf->total_size - buf->pos;
+}
+
+static inline int curr_blk_remain (pktbuf_t * buf) {
+    pktblk_t * blk = buf->curr_blk;
+    if (!blk) {
+        return 0;
+    }
+
+    return (int)(blk->data + blk->size - buf->blk_offset);
+}
+
 static inline int curr_blk_tail_free (pktblk_t * blk) {
     return (int)(blk->payload + PKTBUF_BLK_SIZE - (blk->data + blk->size));
 }
@@ -185,6 +198,7 @@ pktbuf_t * pktbuf_alloc(int size) {
         pktbuf_insert_blk_list(buf, block, 1);
     }
 
+    pktbuf_reset_acc(buf);
     display_check_buf(buf);
 
     return buf;
@@ -350,3 +364,185 @@ net_err_t pktbuf_join (pktbuf_t * dest, pktbuf_t * src) {
     display_check_buf(dest);
     return NET_ERR_OK;
 }
+
+net_err_t pktbuf_set_cont(pktbuf_t * buf, int size) {
+    if (size > buf->total_size) {
+        dbg_error(DBG_BUF, "pktbuf_set_cont: size %d > buf->total_size %d", size, buf->total_size);
+        return NET_ERR_SIZE;
+    }
+
+    if (size > PKTBUF_BLK_SIZE) {
+        dbg_error(DBG_BUF, "pktbuf_set_cont: size %d > PKTBUF_BLK_SIZE %d", size, PKTBUF_BLK_SIZE);
+        return NET_ERR_SIZE;
+    }
+
+    pktblk_t * first_blk = pktbuf_first_blk(buf);
+    if (size <= first_blk->size) {
+        display_check_buf(buf);
+        return NET_ERR_OK;
+    }
+
+    uint8_t * dest = first_blk->payload;
+    for (int i = 0; i < first_blk->size; i++ ) {
+        *dest++ = first_blk->data[i];
+    }
+    first_blk->data = first_blk->payload;
+
+    pktblk_t * curr_blk = pktblk_blk_next(first_blk);
+    int remain_size = size - first_blk->size;
+    while (remain_size && curr_blk) {
+        int curr_size = (curr_blk->size > remain_size) ? remain_size : curr_blk->size;
+
+        plat_memcpy(dest, curr_blk->data, curr_size);
+        dest += curr_size;
+        curr_blk->data += curr_size;
+        curr_blk->size -= curr_size;
+        first_blk->size += curr_size;
+        remain_size -= curr_size;
+        
+        if (curr_blk->size == 0) {
+            pktblk_t * next_blk = pktblk_blk_next(curr_blk);
+            nlist_remove(&buf->blk_list, &curr_blk->node);
+            pktblock_free(curr_blk);
+
+            curr_blk = next_blk;
+        }
+
+    }
+
+    display_check_buf(buf);
+    return NET_ERR_OK;
+}
+
+void pktbuf_reset_acc(pktbuf_t * buf) {
+    if (buf) {
+        buf->pos = 0;
+        buf->curr_blk = pktbuf_first_blk(buf);
+        buf->blk_offset = buf->curr_blk ? buf->curr_blk->data : (uint8_t *)0;
+    }
+}
+
+static void move_forward(pktbuf_t * buf, int size) { 
+    buf->pos += size;
+    buf->blk_offset += size;
+
+    pktblk_t * curr_blk = buf->curr_blk;
+    if (buf->blk_offset >= curr_blk->data + curr_blk->size) {
+        buf->curr_blk = pktblk_blk_next(curr_blk);
+        if (buf->curr_blk) {
+            buf->blk_offset = buf->curr_blk->data;
+        } else {
+            buf->blk_offset = (uint8_t *)0;
+        }
+    }
+}
+
+net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size) {
+    if (!src || !size) {
+        return NET_ERR_PARAM;
+    }
+
+    int remain_size = total_blk_remain(buf);
+    if (remain_size < size) {
+        dbg_error(DBG_BUF, "pktbuf_write: no enough space, remain size: %d, write size: %d", remain_size, size);
+        return NET_ERR_SIZE;
+    }
+
+    while (size) {
+        int blk_size = curr_blk_remain(buf);
+
+        int curr_copy = size > blk_size ? blk_size : size;
+        plat_memcpy(buf->blk_offset, src, curr_copy);
+
+        src += curr_copy;
+        size -= curr_copy;
+
+        move_forward(buf, curr_copy);
+    }
+
+    return NET_ERR_OK;
+}
+
+net_err_t pktbuf_read (pktbuf_t * buf, uint8_t * dest, int size) {
+    if (!dest || !size) {
+        return NET_ERR_PARAM;
+    }
+
+    int remain_size = total_blk_remain(buf);
+    if (remain_size < size) {
+        dbg_error(DBG_BUF, "pktbuf_read: no enough data, remain size: %d, read size: %d", remain_size, size);
+        return NET_ERR_SIZE;
+    }
+
+    while (size) {
+        int blk_size = curr_blk_remain(buf);
+
+        int curr_copy = size > blk_size ? blk_size : size;
+        plat_memcpy(dest, buf->blk_offset, curr_copy);
+
+        dest += curr_copy;
+        size -= curr_copy;
+
+        move_forward(buf, curr_copy);
+    }
+
+    return NET_ERR_OK;
+}
+
+net_err_t pktbuf_seek(pktbuf_t * buf, int offset) {
+    if (buf->pos == offset) {
+        return NET_ERR_OK;
+    }
+
+    if (offset < 0 || offset > buf->total_size) {
+        return NET_ERR_SIZE;
+    }
+
+    int move_bytes;
+    if (offset < buf->pos) {
+        buf->curr_blk = pktbuf_first_blk(buf);
+        buf->blk_offset = buf->curr_blk->data;
+        buf->pos = 0;
+
+        move_bytes = offset;
+    } else {
+        move_bytes = offset - buf->pos;
+    }
+
+    while (move_bytes) {
+        int remain_size = curr_blk_remain(buf);
+        int curr_move = move_bytes > remain_size ? remain_size : move_bytes;
+        
+        move_forward(buf, curr_move);
+        move_bytes -= curr_move;
+    }
+
+    return NET_ERR_OK;
+}
+
+net_err_t pktbuf_copy(pktbuf_t * dest, pktbuf_t * src, int size) {
+    if ((total_blk_remain(dest) < size) || (total_blk_remain(src) < size)) {
+        return NET_ERR_SIZE;
+    }
+
+    while (size) {
+        int dest_remain = curr_blk_remain(dest);
+        int src_remain = curr_blk_remain(src);
+        int copy_size = dest_remain > src_remain ? src_remain : dest_remain;
+
+        copy_size = size > copy_size ? copy_size : size;
+
+        plat_memcpy(dest->blk_offset, src->blk_offset, copy_size);
+
+        move_forward(dest, copy_size);
+        move_forward(src, copy_size);
+        size -= copy_size;
+    }
+
+    return NET_ERR_OK;
+}
+
+net_err_t pktbuf_fill(pktbuf_t * buf, uint8_t value, int size) {
+    
+}
+

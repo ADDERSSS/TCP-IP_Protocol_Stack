@@ -195,6 +195,83 @@ void pktbuf_test (void) {
 	pktbuf_t * sbuf = pktbuf_alloc(892);
 	pktbuf_join(buf, sbuf);
 	pktbuf_free(buf);
+
+	buf = pktbuf_alloc(32);
+	pktbuf_join(buf, pktbuf_alloc(4));
+	pktbuf_join(buf, pktbuf_alloc(16));
+	pktbuf_join(buf, pktbuf_alloc(54));
+	pktbuf_join(buf, pktbuf_alloc(32));
+	pktbuf_join(buf, pktbuf_alloc(38));
+
+	pktbuf_set_cont(buf, 44);
+	pktbuf_set_cont(buf, 60);
+	pktbuf_set_cont(buf, 64);
+	pktbuf_set_cont(buf, 128);
+	pktbuf_set_cont(buf, 135);
+
+	pktbuf_free(buf);
+
+	buf = pktbuf_alloc(32);
+	pktbuf_join(buf, pktbuf_alloc(4));
+	pktbuf_join(buf, pktbuf_alloc(16));
+	pktbuf_join(buf, pktbuf_alloc(54));
+	pktbuf_join(buf, pktbuf_alloc(32));
+	pktbuf_join(buf, pktbuf_alloc(38));
+	pktbuf_join(buf, pktbuf_alloc(512));
+	pktbuf_join(buf, pktbuf_alloc(1000));
+
+	pktbuf_reset_acc(buf);
+
+	static uint16_t temp[1000];
+
+	for (int i = 0; i < 1000; i++) {
+		temp[i] = i;
+	}
+
+	pktbuf_write(buf, (uint8_t *)temp, pktbuf_total(buf));
+
+	static uint16_t read_temp[1000];
+	plat_memset(read_temp, 0, sizeof(read_temp));
+
+	pktbuf_reset_acc(buf);
+	pktbuf_read(buf, (uint8_t *)read_temp, pktbuf_total(buf));
+	if (plat_memcmp(temp, read_temp,pktbuf_total(buf)) != 0) {
+		plat_printf("pktbuf_read error\n");
+		return;
+	}
+
+	plat_memset(read_temp, 0, sizeof(read_temp));
+	pktbuf_seek(buf, 18 * 2);
+	pktbuf_read(buf, (uint8_t *)read_temp, 56);
+	if (plat_memcmp(temp + 18, read_temp, 56) != 0) {
+		plat_printf("pktbuf_seek error\n");
+		return;
+	}
+
+	plat_memset(read_temp, 0, sizeof(read_temp));
+	pktbuf_seek(buf, 85 * 2);
+	pktbuf_read(buf, (uint8_t *)read_temp, 256);
+	if (plat_memcmp(temp + 85, read_temp, 256) != 0) {
+		plat_printf("pktbuf_seek error\n");
+		return;
+	}
+
+	pktbuf_t * dest = pktbuf_alloc(1024);
+	pktbuf_seek(dest, 600);
+	pktbuf_seek(buf, 200);
+	pktbuf_copy(dest, buf, 122);
+
+	plat_memset(read_temp, 0, sizeof(read_temp));
+	pktbuf_seek(dest, 600);
+	pktbuf_read(dest, (uint8_t *)read_temp, 122);
+	if (plat_memcmp(temp + 100, read_temp, 122) != 0) {
+		plat_printf("pktbuf_copy error\n");
+		return;
+	}
+
+	pktbuf_free(dest);
+	pktbuf_free(buf);
+
 }
 void basic_test (void) {
 	nlist_test();
