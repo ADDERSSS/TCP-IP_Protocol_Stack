@@ -1,5 +1,6 @@
 #include "loop.h"
 #include "dbg.h"
+#include "exmsg.h"
 
 static net_err_t loop_open (netif_t * netif, void * data) { 
     netif->type = NETIF_TYPE_LOOP;
@@ -12,6 +13,15 @@ static void loop_close (netif_t * netif) {
 
 static net_err_t loop_xmit (netif_t * netif) { 
     dbg_info(DBG_NETIF, "loop xmit");
+    pktbuf_t * pktbuf = netif_get_out (netif, -1);
+    if (pktbuf) {
+        net_err_t err = netif_put_in (netif, pktbuf, -1);
+        if (err < 0) {
+            pktbuf_free (pktbuf);
+            return err;
+        }
+
+    }
     return NET_ERR_OK;
 }
 
@@ -37,6 +47,9 @@ net_err_t loop_init (void) {
     netif_set_addr(netif, &ip, &mask, (ipaddr_t *)0);
 
     netif_set_active(netif);
+
+    pktbuf_t * buf = pktbuf_alloc(100);
+    netif_out(netif, (ipaddr_t *)0, buf);
 
     dbg_info(DBG_NETIF, "loop init done!");
     return NET_ERR_OK;

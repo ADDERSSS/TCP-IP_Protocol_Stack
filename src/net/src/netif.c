@@ -1,12 +1,63 @@
 #include "netif.h"
 #include "mblock.h"
 #include "dbg.h"
-#include "pktbuf.h"
+#include "exmsg.h"
 
 static netif_t netif_buffer[NETIF_DEV_CNT];
 static mblock_t netif_mblock;
 static nlist_t netif_list;
 static netif_t * netif_default;
+
+#if DBG_DISP_ENABLE(DBG_NETIF)
+
+void display_netif_list (void) { 
+    plat_printf("netif list:\n");
+
+    nlist_node_t * node;
+    nlist_for_each(node, &netif_list) { 
+        netif_t * netif = nlist_entry(node, netif_t, node);
+        plat_printf("%s", netif->name);
+        switch (netif->state) {
+            case NETIF_CLOSED:
+                plat_printf(" %s ", "closed");
+                break;
+            case NETIF_OPENED:
+                plat_printf(" %s ", "opened");
+                break;
+            case NETIF_ACTIVE:
+                plat_printf(" %s ", "active");
+                break;
+            default:
+                plat_printf(" %s ", "unknown state");
+                break;
+        }
+
+        switch (netif->type) {
+            case NETIF_TYPE_ETHER:
+                plat_printf(" %s ", "ether");
+                break;
+            case NETIF_TYPE_LOOP:
+                plat_printf(" %s ", "loop");
+                break;
+            default:
+                plat_printf(" %s ", "unknown type");
+                break;
+        }
+
+        plat_printf(" mtu=%d \n", netif->mtu);
+        dbg_dump_hwaddr("hwaddr", netif->hwaddr.addr, netif->hwaddr.len);
+        dbg_dump_ip("ipaddr", &netif->ipaddr);
+        dbg_dump_ip("netmask", &netif->netmask);
+        dbg_dump_ip("gateway", &netif->gateway);
+        plat_printf(" \n");
+    }
+}
+
+#else
+
+#define display_netif_list () 
+
+#endif
 
 net_err_t netif_init (void) {
     dbg_info(DBG_NETIF, "netif init");
@@ -73,6 +124,8 @@ netif_t * netif_open (const char * dev_name, const netif_ops_t * ops, void * ops
 
     nlist_insert_last(&netif_list, &netif->node);
 
+    display_netif_list();
+
     return netif;
 
 free_return:
@@ -106,7 +159,12 @@ net_err_t netif_set_active (netif_t * netif) {
         return NET_ERR_STATE;
     }
 
+    if (!netif_default && (netif->type != NETIF_TYPE_LOOP)) {
+        netif_set_default(netif);
+    }
+
     netif->state = NETIF_ACTIVE;
+    display_netif_list();
     return NET_ERR_OK;
 }
 
@@ -127,7 +185,81 @@ net_err_t netif_set_deactive (netif_t * netif) {
     if (netif_default == netif) {
         netif_default = (netif_t *)0;
     }
-    
+
     netif->state = NETIF_OPENED;
+    display_netif_list();
     return NET_ERR_OK;
+}
+
+net_err_t netif_close (netif_t * netif) {
+    if (netif->state == NETIF_ACTIVE) {
+        dbg_error(DBG_NETIF, "netif is active, can't close");
+        return NET_ERR_STATE;
+    }
+
+    netif->ops->close(netif);
+    netif->state = NETIF_CLOSED;
+
+    nlist_remove(&netif_list, &netif->node);
+
+    mblock_free(&netif_mblock, netif);
+    display_netif_list();
+    return NET_ERR_OK;
+}
+
+void netif_set_default (netif_t * netif) {
+    netif_default = netif;
+}
+
+net_err_t netif_put_in (netif_t * netif, pktbuf_t * pktbuf, int ms) {
+    net_err_t err = fixq_send(&netif->in_q, pktbuf, ms);
+    if (err < 0) {
+        dbg_warning(DBG_NETIF, "netif_put_in failed");
+        return NET_ERR_FULL;
+    }
+
+    exmsg_netif_in(netif);
+    return NET_ERR_OK;
+}
+
+pktbuf_t * netif_get_in (netif_t * netif, int ms) {
+    pktbuf_t * pktbuf = fixq_recv(&netif->in_q, ms);
+    if (pktbuf) {
+        pktbuf_reset_acc(pktbuf);
+        return pktbuf;
+    }
+
+    dbg_info(DBG_NETIF, "netif_get_in empty");
+    return (pktbuf_t *)0;
+}
+
+net_err_t netif_put_out (netif_t * netif, pktbuf_t * pktbuf, int ms) {
+    net_err_t err = fixq_send(&netif->out_q, pktbuf, ms);
+    if (err < 0) {
+        dbg_warning(DBG_NETIF, "netif_put_out failed");
+        return NET_ERR_FULL;
+    }
+
+    return NET_ERR_OK;
+}
+
+pktbuf_t * netif_get_out (netif_t * netif, int ms) {
+    pktbuf_t * pktbuf = fixq_recv(&netif->out_q, ms);
+    if (pktbuf) {
+        pktbuf_reset_acc(pktbuf);
+        return pktbuf;
+    }
+
+    dbg_info(DBG_NETIF, "netif_get_out empty");
+    return (pktbuf_t *)0;
+}
+
+net_err_t netif_out(netif_t * netif, ipaddr_t * ipaddr, pktbuf_t * buf) {
+    net_err_t err = netif_put_out(netif, buf, -1);
+    if (err < 0) {
+        dbg_info(DBG_NETIF, "send failed");
+        return err;
+    }
+
+    return netif->ops->xmit(netif);
 }

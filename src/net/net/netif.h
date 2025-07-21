@@ -7,6 +7,7 @@
 #include "fixq.h"
 #include "net_cfg.h"
 #include "net_err.h"
+#include "pktbuf.h"
 
 typedef struct _netif_hwaddr_t {
     uint8_t addr[NETIF_HWADDR_SIZE];
@@ -64,5 +65,18 @@ net_err_t netif_set_hwaddr (netif_t * netif, uint8_t * hwaddr, int len);
 
 net_err_t netif_set_active (netif_t * netif);
 net_err_t netif_set_deactive (netif_t * netif);
+
+net_err_t netif_close (netif_t * netif);
+
+void netif_set_default (netif_t * netif);
+
+net_err_t netif_put_in (netif_t * netif, pktbuf_t * pktbuf, int ms);
+pktbuf_t * netif_get_in (netif_t * netif, int ms);
+
+net_err_t netif_put_out (netif_t * netif, pktbuf_t * pktbuf, int ms);
+pktbuf_t * netif_get_out (netif_t * netif, int ms);
+
+net_err_t netif_out(netif_t * netif, ipaddr_t * ipaddr, pktbuf_t * buf);
+
 
 #endif

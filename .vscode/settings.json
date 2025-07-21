@@ -60,7 +60,8 @@
         "internet": "c",
         "ratio": "c",
         "nlocker.h": "c",
-        "ipaddr.h": "c"
+        "ipaddr.h": "c",
+        "thread": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"

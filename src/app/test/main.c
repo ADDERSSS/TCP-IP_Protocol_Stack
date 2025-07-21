@@ -304,7 +304,7 @@ int main (void) {
 
 	net_init();
 
-	basic_test();
+	// basic_test();
 
 	net_start();	
 
