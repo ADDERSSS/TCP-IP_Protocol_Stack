@@ -58,7 +58,9 @@
         "array": "c",
         "executor": "c",
         "internet": "c",
-        "ratio": "c"
+        "ratio": "c",
+        "nlocker.h": "c",
+        "ipaddr.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"

@@ -8,6 +8,7 @@
 #include "nlist.h"
 #include "mblock.h"
 #include "pktbuf.h"
+#include "netif.h"
 
 static sys_mutex_t mutex;
 static sys_sem_t sem;
@@ -290,6 +291,7 @@ void basic_test (void) {
 	nlist_test();
 	mblock_test();
 	pktbuf_test();
+
 }
 
 #define DBG_TEST DBG_LEVEL_INFO

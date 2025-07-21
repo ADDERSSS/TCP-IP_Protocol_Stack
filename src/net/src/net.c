@@ -3,6 +3,8 @@
 #include "net_plat.h"
 #include "pktbuf.h"
 #include "dbg.h"
+#include "netif.h"
+#include "loop.h"
 net_err_t net_init (void) {
     dbg_info(DBG_INIT, "net init");
     net_plat_init();
@@ -10,6 +12,10 @@ net_err_t net_init (void) {
     exmsg_init();
 
     pktbuf_init();
+
+    netif_init();
+
+    loop_init();
     return NET_ERR_OK;
 }
 
