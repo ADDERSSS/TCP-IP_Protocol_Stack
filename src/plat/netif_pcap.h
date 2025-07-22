@@ -2,8 +2,14 @@
 #define NETIF_PCAP_H
 
 #include "net_err.h"
+#include "netif.h"
 
-net_err_t netif_pcap_open (void);
+typedef struct _pacp_data_t {
+    const char * ip;
+    const uint8_t * hwaddr;
+} pcap_data_t;
+
+extern const netif_ops_t netdev_ops;
 
 
 #endif

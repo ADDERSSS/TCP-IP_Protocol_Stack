@@ -71,8 +71,23 @@ void thread2_entry (void * arg) {
 	}
 }
 
+pcap_data_t netdev0_data = {.ip = netdev0_phy_ip, .hwaddr = netdev0_hwaddr};
+
 net_err_t netdev_init (void) {
-	netif_pcap_open();
+	netif_t * netif = netif_open("netif 0", &netdev_ops, &netdev0_data);
+    if (!netif) {
+        dbg_error(DBG_NETIF, "netif 0 open failed!");
+        return NET_ERR_NONE;
+    }
+
+    ipaddr_t ip, mask, gw;
+    ipaddr_from_str(&ip, netdev0_ip);
+    ipaddr_from_str(&mask, netdev0_mask);
+	ipaddr_from_str(&gw, netdev0_gw);
+
+    netif_set_addr(netif, &ip, &mask, &gw);
+
+    netif_set_active(netif);
 
 	return NET_ERR_OK;
 }
@@ -296,19 +311,14 @@ void basic_test (void) {
 
 #define DBG_TEST DBG_LEVEL_INFO
 int main (void) {
-	dbg_info(DBG_TEST, "info");
-	dbg_warning(DBG_TEST, "warning");
-	dbg_error(DBG_TEST, "error");
-	
-	dbg_assert(1 == 1, "failed");
 
 	net_init();
 
 	// basic_test();
-
-	net_start();	
-
+	
 	netdev_init();
+	
+	net_start();	
 
 	while (1) {
 		sys_sleep(10);
