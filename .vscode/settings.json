@@ -62,7 +62,10 @@
         "nlocker.h": "c",
         "ipaddr.h": "c",
         "thread": "c",
-        "netif_pcap.h": "c"
+        "netif_pcap.h": "c",
+        "buffer": "c",
+        "socket": "c",
+        "string_view": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"
