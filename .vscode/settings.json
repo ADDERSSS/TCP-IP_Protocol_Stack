@@ -65,7 +65,8 @@
         "netif_pcap.h": "c",
         "buffer": "c",
         "socket": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "nlist.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools"

@@ -3,6 +3,7 @@
 #include "exmsg.h"
 #include "pcap.h"
 #include "dbg.h"
+#include "ether.h"
 
 void recv_thread (void * arg) {
     plat_printf("recv thread is running....\n");
@@ -66,7 +67,7 @@ static net_err_t netif_pacp_open (netif_t * netif, void * data) {
     }
 
     netif->type = NETIF_TYPE_ETHER;
-    netif->mtu = 1500;
+    netif->mtu = ETHER_MTU;
     netif->ops_data = pcap;
     netif_set_hwaddr(netif, (uint8_t *)dev_data->hwaddr, 6);
 

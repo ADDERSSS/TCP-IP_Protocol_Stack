@@ -9,6 +9,8 @@
 #include "mblock.h"
 #include "pktbuf.h"
 #include "netif.h"
+#include "ether.h"
+#include "tools.h"
 
 static sys_mutex_t mutex;
 static sys_sem_t sem;
@@ -154,7 +156,6 @@ void nlist_test (void) {
 		plat_printf("id = %d\n", node->id);
 	}
 }
-
 void mblock_test (void) { 
 	mblock_t blist;
 	static uint8_t buffer[100][10];
@@ -173,7 +174,6 @@ void mblock_test (void) {
 
 	mblock_destroy(&blist);
 }
-
 void pktbuf_test (void) { 
 	pktbuf_t * buf = pktbuf_alloc(2000);
 	pktbuf_free(buf);
@@ -306,6 +306,9 @@ void basic_test (void) {
 	nlist_test();
 	mblock_test();
 	pktbuf_test();
+
+	uint32_t v1 = x_ntohl(0x12345678);
+	uint16_t v2 = x_ntohs(0x1234);
 
 }
 
