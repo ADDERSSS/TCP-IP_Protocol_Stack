@@ -9,7 +9,8 @@
 #define DBG_PLAT            DBG_LEVEL_INFO
 #define DBG_NETIF           DBG_LEVEL_INFO
 #define DBG_ETHER           DBG_LEVEL_INFO
-#define DBG_TOOLS              DBG_LEVEL_INFO
+#define DBG_TOOLS           DBG_LEVEL_INFO
+#define DBG_TIMER           DBG_LEVEL_INFO
 
 #define NET_ENDIAN_LITTLE   1
 
@@ -24,6 +25,9 @@
 #define NETIF_NAME_SIZE     10
 #define NET_INQ_SIZE        50
 #define NET_OUTQ_SIZE       50
+
 #define NETIF_DEV_CNT       10
+
+#define TIMER_NAME_SIZE     32
 
 #endif
