@@ -3,6 +3,7 @@
 #include "dbg.h"
 #include "tools.h"
 #include "protocol.h"
+#include "ipaddr.h"
 
 #if DBG_DISP_ENABLE(DBG_ETHER)
 static void display_ether_pkt (char * title, ether_pkt_t * pkt, int total_size) {
@@ -70,6 +71,10 @@ static net_err_t ether_in (struct _netif_t * netif, pktbuf_t * buf) {
 }
 
 static net_err_t ether_out (struct _netif_t * netif, ipaddr_t * dest, pktbuf_t * buf) {
+    if (ipaddr_is_equal(&netif->ipaddr, dest)) {
+        return ether_raw_out(netif, NET_PROTOCOL_IPv4, (const uint8_t *)netif->hwaddr.addr, buf);
+    }
+
     return NET_ERR_OK;
 }
 

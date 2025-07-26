@@ -95,7 +95,9 @@ net_err_t netdev_init (void) {
 	pktbuf_t * buf = pktbuf_alloc(32);
 	pktbuf_fill(buf, 0x53, 32);
 
-	netif_out(netif, (ipaddr_t *)0, buf);
+	ipaddr_t dest;
+	ipaddr_from_str(&dest, netdev0_ip);
+	netif_out(netif, &dest, buf);
 
 	return NET_ERR_OK;
 }
@@ -338,10 +340,6 @@ void timer_test (void) {
 	net_timer_add(&t2, "t2", timer2_proc, (void *)0, 1000, NET_TIMER_RELOAD);
 
 	net_timer_remove(&t0);
-
-	net_timer_check_tmo(100);
-	net_timer_check_tmo(1200);
-	net_timer_check_tmo(2000);
 }
 void basic_test (void) {
 	nlist_test();
@@ -359,7 +357,7 @@ int main (void) {
 
 	net_init();
 
-	basic_test();
+	// basic_test();
 	
 	netdev_init();
 	

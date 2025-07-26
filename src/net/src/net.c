@@ -8,6 +8,7 @@
 #include "ether.h"
 #include "tools.h"
 #include "timer.h"
+#include "arp.h"
 net_err_t net_init (void) {
     dbg_info(DBG_INIT, "net init");
     net_plat_init();
@@ -25,6 +26,8 @@ net_err_t net_init (void) {
     loop_init();
 
     ether_init();
+
+    arp_init();
     return NET_ERR_OK;
 }
 

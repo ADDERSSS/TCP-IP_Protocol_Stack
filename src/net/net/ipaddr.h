@@ -25,4 +25,6 @@ void ipaddr_copy (ipaddr_t * dest, const ipaddr_t * src);
 
 ipaddr_t * ipaddr_get_any (void);
 
+int ipaddr_is_equal (const ipaddr_t * ip1, const ipaddr_t * ip2);
+
 #endif
